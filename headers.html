@@ -1,0 +1,70 @@
+<!--
+Copyright (c) 2011 The Chromium Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+
+<html>
+<head>
+<style>
+body {
+  font-family: monospace;
+  word-wrap: break-word;
+}
+
+#container {
+  white-space: pre;
+}
+
+.request {
+  border-top: 1px solid black;
+  margin-bottom: 10px;
+}
+
+</style>
+<script>
+
+var tabId = parseInt(window.location.search.substring(1));
+
+window.addEventListener("load", function() {
+  chrome.experimental.debugger.sendRequest(tabId, "Network.enable");
+  chrome.experimental.debugger.onEvent.addListener(onEvent);
+});
+
+/*
+window.addEventListener("unload", function() {
+  chrome.experimental.debugger.detach(tabId);
+});
+*/
+
+var downSrv = "http://localhost:8000/mp3/post/";
+
+function onEvent(tabId, message, params) {
+    if (message === "Network.requestWillBeSent") {
+        var mp3Ptn = /.*\.mp3$/;
+
+        var url = params.request.url;
+        if(url.match(mp3Ptn))
+        {
+            var rDiv = document.createElement("div");
+            rDiv.textContent = url;
+            document.getElementById("container").appendChild(rDiv);
+
+            // send URL to local download service
+            var req = new XMLHttpRequest();
+            var msg = "url=" + url;
+
+            req.open("POST", downSrv);
+            req.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");
+            req.send(msg);
+        }
+    }
+}
+
+</script>
+</head>
+
+<body>
+<div id="container">hello</div>
+</body>
+</html>
